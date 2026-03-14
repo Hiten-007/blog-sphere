@@ -2,6 +2,7 @@ package org.example.blogspherebackend.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.example.blogspherebackend.entity.User;
+import org.example.blogspherebackend.exception.ResourceNotFoundException;
 import org.example.blogspherebackend.repository.UserRepository;
 import org.example.blogspherebackend.service.UserService;
 import org.springframework.stereotype.Service;
@@ -42,7 +43,7 @@ public class UserServiceImpl implements UserService {
     public User updateUser(Long id, User updatedUser) {
         User existingUser = userRepository.findById(id)
                 .filter(user -> !user.getIsDeleted())
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
         if (updatedUser.getName() != null) {
             existingUser.setName(updatedUser.getName());
@@ -62,7 +63,7 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
                 .filter(u -> !u.getIsDeleted())
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
         user.setIsDeleted(true);
         userRepository.save(user);
