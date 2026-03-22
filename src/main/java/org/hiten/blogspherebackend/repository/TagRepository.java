@@ -1,6 +1,5 @@
 package org.hiten.blogspherebackend.repository;
 
-import org.hiten.blogspherebackend.entity.Category;
 import org.hiten.blogspherebackend.entity.Tag;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -29,10 +28,10 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
     List<Tag> findAllByOrderByNameAsc();
 
     @Query("SELECT t FROM Tag t WHERE LOWER(t.name) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
-    List<Category> searchByName(@Param("searchTerm") String searchTerm);
+    List<Tag> searchByName(@Param("searchTerm") String searchTerm);
 
     @Query("SELECT t FROM Tag t WHERE LOWER(t.name) LIKE LOWER(CONCAT(:prefix, '%')) ORDER BY t.name")
-    List<Category> findByNameStartingWith(@Param("prefix") String prefix);
+    List<Tag> findByNameStartingWith(@Param("prefix") String prefix);
 
     @Query("SELECT t FROM Tag t LEFT JOIN t.posts p " +
             "WHERE p.isDeleted = false AND p.status = 'PUBLISHED' " +
