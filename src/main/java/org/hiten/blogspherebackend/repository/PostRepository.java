@@ -4,6 +4,7 @@ import org.hiten.blogspherebackend.entity.Post;
 import org.hiten.blogspherebackend.enums.PostStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -26,16 +27,20 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
         boolean existsBySlug(String slug);
 
+        @EntityGraph(attributePaths = {"user", "category", "tags"})
         @Query("SELECT p FROM Post p WHERE p.isDeleted = false " +
                 "AND p.status = 'PUBLISHED' " +
                 "AND LOWER(p.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
                 "OR LOWER(p.content) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
         Page<Post> searchPublishedPosts(@Param("searchTerm") String searchTerm, Pageable pageable);
 
+        @EntityGraph(attributePaths = {"user", "category", "tags"})
         Page<Post> findByCategoryIdAndStatusAndIsDeletedFalse(Long categoryId, PostStatus status, Pageable pageable);
 
+        @EntityGraph(attributePaths = {"user", "category", "tags"})
         Page<Post> findByTagsIdAndStatusAndIsDeletedFalse(Long tagId, PostStatus status, Pageable pageable);
 
+        @EntityGraph(attributePaths = {"user", "category", "tags"})
         List<Post> findByTagsIdAndStatusAndIsDeletedFalse(Long tagId, PostStatus status);
 
         long countByCategoryId(Long categoryId);
@@ -44,8 +49,10 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
         long countByUserIdAndIsDeletedFalse(Long userId);
 
+        @EntityGraph(attributePaths = {"user", "category", "tags"})
         Page<Post> findByIsDeletedFalse(Pageable pageable);
 
+        @EntityGraph(attributePaths = {"user", "category", "tags"})
         Page<Post> findByUserIdAndStatusAndIsDeletedFalse(Long userId, PostStatus status, Pageable pageable);
 
         @Modifying
