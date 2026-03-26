@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface PostRepository extends JpaRepository<Post, Long> {
+public interface PostRepository extends SlugRepository, JpaRepository<Post, Long> {
 
         Page<Post> findByStatusAndIsDeletedFalse(PostStatus status, Pageable pageable);
 

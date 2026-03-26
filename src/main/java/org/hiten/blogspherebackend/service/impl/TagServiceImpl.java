@@ -9,6 +9,7 @@ import org.hiten.blogspherebackend.exception.ResourceNotFoundException;
 import org.hiten.blogspherebackend.mapper.TagMapper;
 import org.hiten.blogspherebackend.repository.TagRepository;
 import org.hiten.blogspherebackend.service.TagService;
+import org.hiten.blogspherebackend.util.SlugUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,10 +27,6 @@ public class TagServiceImpl implements TagService {
     private final TagRepository tagRepository;
     private final TagMapper tagMapper;
 
-    private static final Pattern NON_LATIN = Pattern.compile("[^\\w-]");
-    private static final Pattern WHITESPACE = Pattern.compile("[\\s]");
-    private static final Pattern MULTIPLE_HYPHENS = Pattern.compile("-+");
-
     @Override
     @Transactional
     public TagResponse createTag(CreateTagRequest request) {
@@ -40,11 +37,8 @@ public class TagServiceImpl implements TagService {
             throw new BadRequestException("Tag with name '" + normalizedName + "' already exists");
         }
 
-        // Generate slug from name
-        String slug = generateSlug(normalizedName);
-
         // Ensure slug is unique
-        slug = ensureUniqueSlug(slug, null);
+        String slug = SlugUtil.generateUniqueSlug(normalizedName, tagRepository);
 
         Tag tag = Tag.builder()
                 .name(normalizedName)
@@ -134,8 +128,7 @@ public class TagServiceImpl implements TagService {
         List<Tag> newTags = normalizedNames.stream()
                 .filter(name -> !existingNames.contains(name))
                 .map(name -> {
-                    String slug = generateSlug(name);
-                    slug = ensureUniqueSlug(slug, null);
+                    String slug = SlugUtil.generateUniqueSlug(name, tagRepository);
                     return Tag.builder()
                             .name(name)
                             .slug(slug)
@@ -169,50 +162,11 @@ public class TagServiceImpl implements TagService {
         return tagRepository.existsByName(normalizeTagName(name));
     }
 
-
     private String normalizeTagName(String name) {
         if (name == null) {
             return "";
         }
         return name.trim().toLowerCase(Locale.ENGLISH);
-    }
-
-
-    private String generateSlug(String name) {
-        if (name == null || name.isBlank()) {
-            return "";
-        }
-
-        String normalized = Normalizer.normalize(name, Normalizer.Form.NFD);
-        String slug = WHITESPACE.matcher(normalized).replaceAll("-");
-        slug = NON_LATIN.matcher(slug).replaceAll("");
-        slug = MULTIPLE_HYPHENS.matcher(slug).replaceAll("-");
-        slug = slug.toLowerCase(Locale.ENGLISH);
-        slug = slug.replaceAll("^-|-$", "");
-
-        return slug;
-    }
-
-
-    private String ensureUniqueSlug(String baseSlug, String currentSlug) {
-        if (baseSlug.isEmpty()) {
-            baseSlug = "tag";
-        }
-
-        // If generated slug matches current slug, keep it
-        if (baseSlug.equals(currentSlug)) {
-            return currentSlug;
-        }
-
-        String slug = baseSlug;
-        int counter = 1;
-
-        while (tagRepository.existsBySlug(slug) && !slug.equals(currentSlug)) {
-            slug = baseSlug + "-" + counter;
-            counter++;
-        }
-
-        return slug;
     }
 }
 

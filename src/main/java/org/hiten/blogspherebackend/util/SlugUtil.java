@@ -1,6 +1,6 @@
 package org.hiten.blogspherebackend.util;
 
-import org.hiten.blogspherebackend.repository.PostRepository;
+import org.hiten.blogspherebackend.repository.SlugRepository;
 
 import java.text.Normalizer;
 import java.util.Locale;
@@ -27,7 +27,7 @@ public class SlugUtil {
         return slug;
     }
 
-    public static String generateUniqueSlug(String title, PostRepository repository) {
+    public static String generateUniqueSlug(String title, SlugRepository repository) {
         String baseSlug = generateSlug(title);
 
         if (baseSlug.isEmpty()) {
@@ -46,7 +46,7 @@ public class SlugUtil {
     }
 
 
-    public static String generateUniqueSlug(String title, String currentSlug, PostRepository repository) {
+    public static String generateUniqueSlug(String title, String currentSlug, SlugRepository repository) {
         String baseSlug = generateSlug(title);
 
         if (baseSlug.isEmpty()) {

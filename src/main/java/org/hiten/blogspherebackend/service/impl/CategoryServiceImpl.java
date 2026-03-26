@@ -10,13 +10,11 @@ import org.hiten.blogspherebackend.mapper.CategoryMapper;
 import org.hiten.blogspherebackend.repository.CategoryRepository;
 import org.hiten.blogspherebackend.repository.PostRepository;
 import org.hiten.blogspherebackend.service.CategoryService;
+import org.hiten.blogspherebackend.util.SlugUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.text.Normalizer;
 import java.util.List;
-import java.util.Locale;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,10 +26,6 @@ public class CategoryServiceImpl implements CategoryService {
     private final PostRepository postRepository;
     private final CategoryMapper categoryMapper;
 
-    private static final Pattern NON_LATIN = Pattern.compile("[^\\w-]");
-    private static final Pattern WHITESPACE = Pattern.compile("[\\s]");
-    private static final Pattern MULTIPLE_HYPHENS = Pattern.compile("-+");
-
     @Override
     @Transactional
     public CategoryResponse createCategory(CreateCategoryRequest request) {
@@ -40,11 +34,8 @@ public class CategoryServiceImpl implements CategoryService {
             throw new BadRequestException("Category with name '" + request.getName() + "' already exists");
         }
 
-        // Generate slug from name
-        String slug = generateSlug(request.getName());
-
         // Ensure slug is unique
-        slug = ensureUniqueSlug(slug, null);
+        String slug = SlugUtil.generateUniqueSlug(request.getName(), categoryRepository);
 
         Category category = Category.builder()
                 .name(request.getName())
@@ -72,8 +63,8 @@ public class CategoryServiceImpl implements CategoryService {
         // Update name and regenerate slug if name changed
         if (!category.getName().equals(request.getName())) {
             category.setName(request.getName());
-            String newSlug = generateSlug(request.getName());
-            category.setSlug(ensureUniqueSlug(newSlug, category.getSlug()));
+            String newSlug = SlugUtil.generateUniqueSlug(request.getName(), category.getSlug(), categoryRepository);
+            category.setSlug(newSlug);
         }
 
         // Update description
@@ -141,43 +132,5 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public boolean existsByName(String name) {
         return categoryRepository.existsByName(name);
-    }
-
-
-    private String generateSlug(String name) {
-        if (name == null || name.isBlank()) {
-            return "";
-        }
-
-        String normalized = Normalizer.normalize(name, Normalizer.Form.NFD);
-        String slug = WHITESPACE.matcher(normalized).replaceAll("-");
-        slug = NON_LATIN.matcher(slug).replaceAll("");
-        slug = MULTIPLE_HYPHENS.matcher(slug).replaceAll("-");
-        slug = slug.toLowerCase(Locale.ENGLISH);
-        slug = slug.replaceAll("^-|-$", "");
-
-        return slug;
-    }
-
-
-    private String ensureUniqueSlug(String baseSlug, String currentSlug) {
-        if (baseSlug.isEmpty()) {
-            baseSlug = "category";
-        }
-
-        // If generated slug matches current slug, keep it
-        if (baseSlug.equals(currentSlug)) {
-            return currentSlug;
-        }
-
-        String slug = baseSlug;
-        int counter = 1;
-
-        while (categoryRepository.existsBySlug(slug) && !slug.equals(currentSlug)) {
-            slug = baseSlug + "-" + counter;
-            counter++;
-        }
-
-        return slug;
     }
 }

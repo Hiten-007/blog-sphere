@@ -11,7 +11,7 @@ import java.util.Optional;
 import java.util.Set;
 
 @Repository
-public interface TagRepository extends JpaRepository<Tag, Long> {
+public interface TagRepository extends SlugRepository, JpaRepository<Tag, Long> {
 
     Optional<Tag> findBySlug(String slug);
 
