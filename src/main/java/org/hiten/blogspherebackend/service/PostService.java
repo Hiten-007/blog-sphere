@@ -12,7 +12,7 @@ import java.util.List;
 public interface PostService {
 
 
-    PostResponse createPost(CreatePostRequest request, Long userId);
+    PostResponse createPost(CreatePostRequest request, MultipartFile file, Long userId);
 
 
     PostResponse updatePost(Long postId, UpdatePostRequest request, Long userId);

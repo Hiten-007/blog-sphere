@@ -7,13 +7,16 @@ import org.hiten.blogspherebackend.dto.request.CreatePostRequest;
 import org.hiten.blogspherebackend.dto.request.UpdatePostRequest;
 import org.hiten.blogspherebackend.dto.response.PostResponse;
 import org.hiten.blogspherebackend.entity.User;
+import org.hiten.blogspherebackend.exception.BadRequestException;
 import org.hiten.blogspherebackend.service.PostService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -27,15 +30,16 @@ public class PostController {
     private final PostService postService;
 
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('AUTHOR', 'ADMIN')")
     public ResponseEntity<PostResponse> createPost(
-            @Valid @RequestBody CreatePostRequest request,
+            @Valid @RequestPart("post") CreatePostRequest request,
+            @RequestPart(value = "file", required = false) MultipartFile file,
             @AuthenticationPrincipal User user) {
 
         log.info("Creating post with title: '{}' by user: {}", request.getTitle(), user.getEmail());
 
-        PostResponse response = postService.createPost(request, user.getId());
+        PostResponse response = postService.createPost(request, file, user.getId());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -177,6 +181,24 @@ public class PostController {
         log.info("Publishing post {} by user: {}", id, user.getEmail());
 
         PostResponse response = postService.publishPost(id, user.getId());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{id}/image")
+    @PreAuthorize("hasAnyRole('AUTHOR', 'ADMIN')")
+    public ResponseEntity<PostResponse> uploadFeaturedImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal User user) {
+
+        log.info("Uploading featured image for post {} by user: {}", id, user.getEmail());
+
+        if (file.isEmpty()) {
+            throw new BadRequestException("File is empty");
+        }
+
+        PostResponse response = postService.uploadFeaturedImage(id, file, user.getId());
 
         return ResponseEntity.ok(response);
     }
