@@ -41,4 +41,8 @@ public interface TagRepository extends SlugRepository, JpaRepository<Tag, Long> 
     @Query("SELECT DISTINCT t FROM Tag t JOIN t.posts p " +
            "WHERE p.user.id = :userId AND p.isDeleted = false")
     List<Tag> findTagsByAuthor(@Param("userId") Long userId);
+
+    default String getEntityName() {
+        return "tag";
+    }
 }
