@@ -28,5 +28,7 @@ public interface TagService {
     List<TagResponse> getPopularTags(int limit);
 
     boolean existsByName(String name);
+
+    TagResponse updateTag(Long id, CreateTagRequest request);
 }
 

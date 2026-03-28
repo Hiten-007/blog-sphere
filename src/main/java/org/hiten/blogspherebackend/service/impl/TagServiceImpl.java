@@ -1,8 +1,11 @@
 package org.hiten.blogspherebackend.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.hiten.blogspherebackend.dto.request.CreateCategoryRequest;
 import org.hiten.blogspherebackend.dto.request.CreateTagRequest;
+import org.hiten.blogspherebackend.dto.response.CategoryResponse;
 import org.hiten.blogspherebackend.dto.response.TagResponse;
+import org.hiten.blogspherebackend.entity.Category;
 import org.hiten.blogspherebackend.entity.Tag;
 import org.hiten.blogspherebackend.exception.BadRequestException;
 import org.hiten.blogspherebackend.exception.ResourceNotFoundException;
@@ -160,6 +163,32 @@ public class TagServiceImpl implements TagService {
     @Override
     public boolean existsByName(String name) {
         return tagRepository.existsByName(normalizeTagName(name));
+    }
+
+    @Override
+    @Transactional
+    public TagResponse updateTag(Long id, CreateTagRequest request) {
+        Tag tag = tagRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tag", "id", id));
+
+        String normalizedName = normalizeTagName(request.getName());
+
+        // Check if new name conflicts with another tag
+        if (!tag.getName().equals(normalizedName) &&
+                tagRepository.existsByName(normalizedName)) {
+            throw new BadRequestException("Tag with name '" + normalizedName + "' already exists");
+        }
+
+        // Update name and regenerate slug if name changed
+        if (!tag.getName().equals(normalizedName)) {
+            tag.setName(normalizedName);
+            String newSlug = SlugUtil.generateUniqueSlug(normalizedName, tag.getSlug(), tagRepository);
+            tag.setSlug(newSlug);
+        }
+
+        Tag savedTag = tagRepository.save(tag);
+
+        return tagMapper.toResponse(savedTag);
     }
 
     private String normalizeTagName(String name) {
