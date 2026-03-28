@@ -17,8 +17,10 @@ import java.util.Optional;
 @Repository
 public interface PostRepository extends SlugRepository, JpaRepository<Post, Long> {
 
+        @EntityGraph(attributePaths = {"user", "category", "tags"})
         Page<Post> findByStatusAndIsDeletedFalse(PostStatus status, Pageable pageable);
 
+        @EntityGraph(attributePaths = {"user", "category", "tags"})
         Page<Post> findByUserIdAndIsDeletedFalse(Long userId, Pageable pageable);
 
         Optional<Post> findBySlugAndIsDeletedFalse(String slug);
