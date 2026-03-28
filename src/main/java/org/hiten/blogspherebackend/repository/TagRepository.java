@@ -42,7 +42,7 @@ public interface TagRepository extends SlugRepository, JpaRepository<Tag, Long> 
            "WHERE p.user.id = :userId AND p.isDeleted = false")
     List<Tag> findTagsByAuthor(@Param("userId") Long userId);
 
-    default String getEntityName() {
+    default String getBaseSlug() {
         return "tag";
     }
 }

@@ -31,7 +31,7 @@ public class SlugUtil {
         String baseSlug = generateSlug(title);
 
         if (baseSlug.isEmpty()) {
-            baseSlug = repository.getEntityName();;
+            baseSlug = repository.getBaseSlug();;
         }
 
         String slug = baseSlug;
@@ -50,7 +50,7 @@ public class SlugUtil {
         String baseSlug = generateSlug(title);
 
         if (baseSlug.isEmpty()) {
-            baseSlug = repository.getEntityName();;
+            baseSlug = repository.getBaseSlug();;
         }
 
         // If the generated slug is the same as current, keep it

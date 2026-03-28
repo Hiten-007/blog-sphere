@@ -69,7 +69,7 @@ public interface PostRepository extends SlugRepository, JpaRepository<Post, Long
         @Query("UPDATE Post p SET p.likeCount = CASE WHEN p.likeCount > 0 THEN p.likeCount - 1 ELSE 0 END WHERE p.id = :postId")
         void decrementLikeCount(@Param("postId") Long postId);
 
-        default String getEntityName() {
+        default String getBaseSlug() {
                 return "post";
         }
 }

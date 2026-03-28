@@ -28,7 +28,7 @@ public interface CategoryRepository extends SlugRepository, JpaRepository<Catego
     @Query("SELECT c FROM Category c WHERE LOWER(c.name) LIKE LOWER(CONCAT(:prefix, '%')) ORDER BY c.name")
     List<Category> findByNameStartingWith(@Param("prefix") String prefix);
 
-    default String getEntityName() {
+    default String getBaseSlug() {
         return "category";
     }
 }
