@@ -1,8 +1,6 @@
 package org.hiten.blogspherebackend.security;
 
 import lombok.RequiredArgsConstructor;
-import org.hiten.blogspherebackend.entity.User;
-import org.hiten.blogspherebackend.repository.UserRepository;
 import org.hiten.blogspherebackend.service.UserService;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -10,7 +8,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 /**
- * Custom UserDsetailsService implementation for Spring Security.
+ * Custom UserDetailsService implementation for Spring Security.
  * Loads user details from database for authentication.
  */
 @Service
