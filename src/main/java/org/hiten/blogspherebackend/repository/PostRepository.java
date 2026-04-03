@@ -29,6 +29,24 @@ public interface PostRepository extends SlugRepository, JpaRepository<Post, Long
 
         boolean existsBySlug(String slug);
 
+        @Query(
+                value = "SELECT p.id FROM posts p " +
+                        "WHERE p.is_deleted = false " +
+                        "AND p.status = 'PUBLISHED' " +
+                        "AND p.search_vector @@ plainto_tsquery('english', :query) " +
+                        "ORDER BY p.published_at DESC",
+                countQuery = "SELECT COUNT(p.id) FROM posts p " +
+                        "WHERE p.is_deleted = false " +
+                        "AND p.status = 'PUBLISHED' " +
+                        "AND p.search_vector @@ plainto_tsquery('english', :query)",
+                nativeQuery = true
+        )
+        Page<Long> findPublishedPostIdsByFullTextSearch(@Param("query") String query, Pageable pageable);
+
+        @EntityGraph(attributePaths = {"user", "category", "tags"})
+        @Query("SELECT p FROM Post p WHERE p.id IN :ids")
+        List<Post> findByIdIn(@Param("ids") List<Long> ids);
+
         @EntityGraph(attributePaths = {"user", "category", "tags"})
         @Query("SELECT p FROM Post p WHERE p.isDeleted = false " +
                 "AND p.status = 'PUBLISHED' " +
