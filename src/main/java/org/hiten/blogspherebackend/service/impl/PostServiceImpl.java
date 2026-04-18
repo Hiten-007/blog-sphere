@@ -20,6 +20,7 @@ import org.hiten.blogspherebackend.repository.UserRepository;
 import org.hiten.blogspherebackend.service.FileStorageService;
 import org.hiten.blogspherebackend.service.PostService;
 import org.hiten.blogspherebackend.util.SlugUtil;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
@@ -45,6 +46,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "posts", allEntries = true)
     public PostResponse createPost(CreatePostRequest request, MultipartFile file, Long userId) {
         // Find the author
         User author = userRepository.findById(userId)
@@ -94,6 +96,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "posts", key = "#postId")
     public PostResponse updatePost(Long postId, UpdatePostRequest request, Long userId) {
         Post post = postRepository.findById(postId)
                 .filter(p -> !p.getIsDeleted())
@@ -157,6 +160,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "posts", key = "#postId")
     public void deletePost(Long postId, Long userId) {
         Post post = postRepository.findById(postId)
                 .filter(p -> !p.getIsDeleted())
@@ -246,6 +250,7 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    @Cacheable(value = "posts", key = "'all_' + #categoryId + '_' + #page + '_' + #size")
     public Page<PostResponse> getPostsByCategory(Long categoryId, int page, int size) {
         // Verify category exists
         if (!categoryRepository.existsById(categoryId)) {
@@ -294,6 +299,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "posts", allEntries = true)
     public PostResponse publishPost(Long postId, Long userId) {
         Post post = postRepository.findById(postId)
                 .filter(p -> !p.getIsDeleted())

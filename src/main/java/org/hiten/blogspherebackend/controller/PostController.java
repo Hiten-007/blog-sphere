@@ -9,6 +9,7 @@ import org.hiten.blogspherebackend.dto.response.PostResponse;
 import org.hiten.blogspherebackend.entity.User;
 import org.hiten.blogspherebackend.exception.BadRequestException;
 import org.hiten.blogspherebackend.service.PostService;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
