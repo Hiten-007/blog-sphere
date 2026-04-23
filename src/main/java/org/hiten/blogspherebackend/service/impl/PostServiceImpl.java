@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.hiten.blogspherebackend.dto.request.CreatePostRequest;
 import org.hiten.blogspherebackend.dto.request.UpdatePostRequest;
 import org.hiten.blogspherebackend.dto.response.PostResponse;
+import org.hiten.blogspherebackend.dto.response.RestPage;
 import org.hiten.blogspherebackend.entity.Category;
 import org.hiten.blogspherebackend.entity.Post;
 import org.hiten.blogspherebackend.entity.Tag;
@@ -197,7 +198,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Cacheable(value = "posts", key = "'all_' + #page + '_' + #size + '_' + #sortBy + '_' + #sortDir", condition = "#page == 0")
-    public Page<PostResponse> getAllPosts(int page, int size, String sortBy, String sortDir) {
+    public RestPage<PostResponse> getAllPosts(int page, int size, String sortBy, String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase("asc")
                 ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
@@ -209,7 +210,8 @@ public class PostServiceImpl implements PostService {
                 pageable
         );
 
-        return posts.map(postMapper::toResponse);
+        // Wrapped in RestPage so Jackson can deserialize it on cache read-back
+        return new RestPage<>(posts.map(postMapper::toResponse));
     }
 
     @Override

@@ -3,6 +3,7 @@ package org.hiten.blogspherebackend.service;
 import org.hiten.blogspherebackend.dto.request.CreatePostRequest;
 import org.hiten.blogspherebackend.dto.request.UpdatePostRequest;
 import org.hiten.blogspherebackend.dto.response.PostResponse;
+import org.hiten.blogspherebackend.dto.response.RestPage;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,7 +28,7 @@ public interface PostService {
     PostResponse getPostBySlug(String slug);
 
 
-    Page<PostResponse> getAllPosts(int page, int size, String sortBy, String sortDir);
+    RestPage<PostResponse> getAllPosts(int page, int size, String sortBy, String sortDir);
 
 
     Page<PostResponse> getPostsByUser(Long userId, int page, int size);
