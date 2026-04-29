@@ -13,6 +13,7 @@ import org.hiten.blogspherebackend.exception.BadRequestException;
 import org.hiten.blogspherebackend.exception.UnauthorizedException;
 import org.hiten.blogspherebackend.security.JwtUtil;
 import org.hiten.blogspherebackend.service.AuthService;
+import org.hiten.blogspherebackend.service.EmailService;
 import org.hiten.blogspherebackend.service.UserService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,6 +31,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final EmailService emailService;
 
     @Value("${jwt.access-token-expiration}")
     private long accessTokenExpiration;
@@ -53,10 +55,13 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         // Save user
-        user = userService.createUser(user);
+        User savedUser = userService.createUser(user);
+
+        // Fire-and-forget: send welcome email on background thread
+        emailService.sendWelcomeEmail(savedUser);
 
         // Generate tokens and return response
-        return buildAuthResponse(user);
+        return buildAuthResponse(savedUser);
     }
 
     @Override
