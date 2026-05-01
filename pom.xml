@@ -135,6 +135,21 @@
             <artifactId>datafaker</artifactId>
             <version>2.4.2</version>
         </dependency>
+<!--        Bucket4j - token-bucket rate limiting core-->
+        <dependency>
+            <groupId>com.bucket4j</groupId>
+            <artifactId>bucket4j-core</artifactId>
+            <version>8.10.1</version>
+        </dependency>
+
+<!--        Bucket4j Redis backed - LettuceBasedProxyManager for distributed state-->
+        <dependency>
+            <groupId>com.bucket4j</groupId>
+            <artifactId>bucket4j-redis</artifactId>
+            <version>8.10.1</version>
+        </dependency>
+
+<!--        Spring Mail - JavaMailSender + SMTP integration-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
