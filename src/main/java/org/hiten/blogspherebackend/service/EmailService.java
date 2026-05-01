@@ -19,4 +19,7 @@ public interface EmailService {
 
         // Send a weekly digest containing the most popular posts
         void sendWeeklyDigest(User user, List<Post> popularPosts);
+
+        // Send OTP for email verification during registration
+        void sendOtpEmail(String email, String otp);
 }

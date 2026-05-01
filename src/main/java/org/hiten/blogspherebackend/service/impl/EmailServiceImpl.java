@@ -79,7 +79,6 @@ public class EmailServiceImpl implements EmailService {
                 """;
     }
 
-
     private String buildWelcomeHtml(User user) {
         String body = """
                 <h2 style="margin:0 0 16px;font-size:24px;color:#1e293b;font-weight:700;">
@@ -102,6 +101,36 @@ public class EmailServiceImpl implements EmailService {
 
         return htmlHeader() + body + htmlFooter();
     }
+
+    private String buildOtpHtml(String email, String otp) {
+        String body = """
+                <h2 style="margin:0 0 16px;font-size:24px;color:#1e293b;font-weight:700;">
+                  Verify your email address
+                </h2>
+                <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#475569;">
+                  Use the one-time password below to complete your registration.
+                  It expires in <strong>15 minutes</strong>.
+                </p>
+
+                <table role="presentation" cellpadding="0" cellspacing="0"
+                       style="margin:0 auto 24px;">
+                  <tr>
+                    <td style="background-color:#f1f5f9;border:2px dashed #6366f1;
+                                border-radius:12px;padding:20px 48px;text-align:center;">
+                      <span style="font-size:36px;font-weight:800;letter-spacing:12px;
+                                   color:#1e293b;">%s</span>
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="margin:0;font-size:13px;line-height:1.6;color:#94a3b8;text-align:center;">
+                  If you did not request this, please ignore this email. Your account is safe.
+                </p>
+                """.formatted(escapeHtml(otp));
+
+        return htmlHeader() + body + htmlFooter();
+    }
+
     private String ctaButton(String label, String url) {
         return """
                 <table role="presentation" cellpadding="0" cellspacing="0"
@@ -141,7 +170,7 @@ public class EmailServiceImpl implements EmailService {
             helper.setFrom(FROM_ADDRESS);
             helper.setTo(to);
             helper.setSubject(subject);
-            helper.setText(htmlBody, true); // true
+            helper.setText(htmlBody, true);
             mailSender.send(mimeMessage);
             log.info("[EMAIL] Sent Successfully: type={} to={}", type, to);;
         }   catch(MessagingException e){
@@ -179,5 +208,16 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendWeeklyDigest(User user, List<Post> popularPosts) {
 
+    }
+
+    @Override
+    @Async("taskExecutor")
+    public void sendOtpEmail(String email, String otp) {
+        try {
+            log.info("[EMAIL] Preparing OTP_VERIFICATION email for {}", email);
+            doSend(email, "Your Blog CMS verification code", buildOtpHtml(email, otp), EmailType.OTP_VERIFICATION);
+        } catch (Exception e) {
+            log.error("[EMAIL] Failed to prepare OTP email for {}: {}", email, e.getMessage(), e);
+        }
     }
 }

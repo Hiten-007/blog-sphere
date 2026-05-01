@@ -2,17 +2,18 @@ package org.hiten.blogspherebackend.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.hiten.blogspherebackend.dto.request.LoginRequest;
-import org.hiten.blogspherebackend.dto.request.RefreshTokenRequest;
-import org.hiten.blogspherebackend.dto.request.RegisterRequest;
+import org.hiten.blogspherebackend.dto.request.*;
 import org.hiten.blogspherebackend.dto.response.AuthResponse;
 import org.hiten.blogspherebackend.service.AuthService;
+import org.hiten.blogspherebackend.service.OtpService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 /**
  * REST Controller for authentication operations.
@@ -24,6 +25,23 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final OtpService otpService;
+
+    @PostMapping("/otp/send")
+    public ResponseEntity<Map<String, String>> sendOtp(@Valid @RequestBody OtpRequest request) {
+        otpService.generateAndSendOtp(request.getEmail());
+        return ResponseEntity.ok(Map.of("message", "OTP sent to " + request.getEmail()));
+    }
+
+    @PostMapping("/otp/verify")
+    public ResponseEntity<Map<String, String>> verifyOtp(@Valid @RequestBody OtpVerifyRequest request) {
+        boolean valid = otpService.verifyOtp(request.getEmail(), request.getOtp());
+        if (!valid) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "Invalid or expired OTP"));
+        }
+        return ResponseEntity.ok(Map.of("message", "OTP verified. You may now complete registration."));
+    }
 
     /**
      * Register a new user.
