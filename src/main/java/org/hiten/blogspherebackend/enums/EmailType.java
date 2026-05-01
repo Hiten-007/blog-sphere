@@ -4,6 +4,7 @@ public enum EmailType {
     WELCOME,
     PASSWORD_RESET,
     COMMENT_NOTIFICATION,
-    WEEKLY_DIGEST
+    WEEKLY_DIGEST,
+    OTP_VERIFICATION
 }
 
