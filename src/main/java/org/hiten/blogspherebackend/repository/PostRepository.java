@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -90,4 +91,14 @@ public interface PostRepository extends SlugRepository, JpaRepository<Post, Long
         default String getBaseSlug() {
                 return "post";
         }
+
+        @Modifying
+        @Query("DELETE FROM Post p WHERE p.isDeleted = true AND p.updatedAt < :cutoff")
+        int hardDeleteByIsDeletedTrueAndUpdatedAtBefore(@Param("cutoff") LocalDateTime cutoff);
+
+        long countByIsDeletedTrue();
+
+        @Modifying
+        @Query("UPDATE Post p SET p.updatedAt = :updatedAt WHERE p.id = :id")
+        void backdateUpdatedAt(@Param("id") Long id, @Param("updatedAt") LocalDateTime updatedAt);
 }
