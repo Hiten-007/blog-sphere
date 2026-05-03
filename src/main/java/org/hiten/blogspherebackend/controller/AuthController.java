@@ -6,6 +6,7 @@ import org.hiten.blogspherebackend.dto.request.*;
 import org.hiten.blogspherebackend.dto.response.AuthResponse;
 import org.hiten.blogspherebackend.service.AuthService;
 import org.hiten.blogspherebackend.service.OtpService;
+import org.hiten.blogspherebackend.service.PasswordResetService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,6 +27,8 @@ public class AuthController {
 
     private final AuthService authService;
     private final OtpService otpService;
+    private final PasswordResetService passwordResetService;
+
 
     @PostMapping("/otp/send")
     public ResponseEntity<Map<String, String>> sendOtp(@Valid @RequestBody OtpRequest request) {
@@ -77,6 +80,18 @@ public class AuthController {
     public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
         AuthResponse response = authService.refreshToken(request);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/password-reset/request")
+    public ResponseEntity<Map<String, String>> requestPasswordReset(@Valid @RequestBody PasswordResetRequest request) {
+        passwordResetService.initiatePasswordReset(request.getEmail());
+        return ResponseEntity.ok(Map.of("message","If that email exists, a reset link has been sent."));
+    }
+
+    @PostMapping("/password-reset/confirm")
+    public ResponseEntity<Map<String, String>> confirmPasswordReset(@Valid @RequestBody PasswordResetConfirmRequest request) {
+        passwordResetService.confirmPasswordReset(request.getToken(), request.getNewPassword());
+        return ResponseEntity.ok(Map.of("message", "Password updated successfully."));
     }
 }
 

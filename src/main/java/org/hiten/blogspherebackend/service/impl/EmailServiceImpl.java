@@ -131,6 +131,29 @@ public class EmailServiceImpl implements EmailService {
         return htmlHeader() + body + htmlFooter();
     }
 
+    private String buildPasswordResetHtml(User user, String resetToken) {
+        String resetUrl = APP_BASE_URL + "/reset-password?token=" + resetToken;
+        String body = """
+                <h2 style="margin:0 0 16px;font-size:24px;color:#1e293b;font-weight:700;">
+                  Reset your password
+                </h2>
+                <p style="margin:0 0 12px;font-size:15px;line-height:1.7;color:#475569;">
+                  Hi %s, we received a request to reset the password for your account.
+                </p>
+                <p style="margin:0 0 24px;font-size:15px;line-height:1.7;color:#475569;">
+                  Click the button below to choose a new password. This link is valid for
+                  <strong>30 minutes</strong>.
+                </p>
+                %s
+                <p style="margin:32px 0 0;font-size:13px;line-height:1.6;color:#94a3b8;">
+                  If you did not request a password reset, you can safely ignore this email.
+                  Your password will not be changed.
+                </p>
+                """.formatted(escapeHtml(user.getName()), ctaButton("Reset Password", resetUrl));
+
+        return htmlHeader() + body + htmlFooter();
+    }
+
     private String ctaButton(String label, String url) {
         return """
                 <table role="presentation" cellpadding="0" cellspacing="0"
@@ -197,7 +220,13 @@ public class EmailServiceImpl implements EmailService {
     @Override
     @Async("taskExecutor")
     public void sendPasswordResetEmail(User user, String resetToken) {
-
+        try {
+            log.info("[EMAIL] Preparing PASSWORD_RESET email for user id={}", user.getId());
+            doSend(user.getEmail(), "Reset your Blog CMS password",
+                    buildPasswordResetHtml(user, resetToken), EmailType.PASSWORD_RESET);
+        } catch (Exception e) {
+            log.error("[EMAIL] Failed to prepare PASSWORD_RESET email for {}: {}", user.getEmail(), e.getMessage(), e);
+        }
     }
 
     @Override

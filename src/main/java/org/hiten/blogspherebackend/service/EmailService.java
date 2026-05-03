@@ -11,7 +11,7 @@ public interface EmailService {
         // Send a welcome email to a newly registered user
         void sendWelcomeEmail(User user);
 
-        // Sena a password-reset link to the user
+        // Send password-reset link to the user
         void sendPasswordResetEmail(User user, String resetToken);
 
         // Notify a post author that someone lft a comment on their post
