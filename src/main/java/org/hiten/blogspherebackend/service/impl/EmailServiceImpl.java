@@ -154,6 +154,72 @@ public class EmailServiceImpl implements EmailService {
         return htmlHeader() + body + htmlFooter();
     }
 
+    private String buildCommentNotificationHtml(User postAuthor, Comment comment) {
+        String postUrl = APP_BASE_URL + "/posts/" + comment.getPost().getSlug();
+        String body = """
+                <h2 style="margin:0 0 16px;font-size:24px;color:#1e293b;font-weight:700;">
+                  New comment on your post &#128172;
+                </h2>
+                <p style="margin:0 0 12px;font-size:15px;line-height:1.7;color:#475569;">
+                  Hi %s, <strong style="color:#1e293b;">%s</strong> left a comment on your post
+                  <em>&ldquo;%s&rdquo;</em>:
+                </p>
+
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%%"
+                       style="margin:16px 0 24px;">
+                  <tr>
+                    <td style="background-color:#f8fafc;border-left:4px solid #6366f1;
+                                border-radius:0 8px 8px 0;padding:16px 20px;">
+                      <p style="margin:0;font-size:15px;line-height:1.7;color:#334155;
+                                 font-style:italic;">%s</p>
+                    </td>
+                  </tr>
+                </table>
+                %s
+                """.formatted(
+                escapeHtml(postAuthor.getName()),
+                escapeHtml(comment.getAuthor().getName()),
+                escapeHtml(comment.getPost().getTitle()),
+                escapeHtml(comment.getBody().length() > 300
+                        ? comment.getBody().substring(0, 300) + "…"
+                        : comment.getBody()),
+                ctaButton("View Comment", postUrl)
+        );
+
+        return htmlHeader() + body + htmlFooter();
+    }
+
+    private String buildPostPublishedHtml(User author, Post post) {
+        String postUrl = APP_BASE_URL + "/posts/" + post.getSlug();
+        String body = """
+            <h2 style="margin:0 0 16px;font-size:24px;color:#1e293b;font-weight:700;">
+              Your post is live! &#127881;
+            </h2>
+            <p style="margin:0 0 12px;font-size:15px;line-height:1.7;color:#475569;">
+              Hi %s, your scheduled post has just been published:
+            </p>
+            <table role="presentation" cellpadding="0" cellspacing="0" width="100%%"
+                   style="margin:0 0 24px;">
+              <tr>
+                <td style="background-color:#f8fafc;border-left:4px solid #6366f1;
+                            border-radius:0 8px 8px 0;padding:16px 20px;">
+                  <p style="margin:0;font-size:17px;font-weight:600;color:#1e293b;">%s</p>
+                </td>
+              </tr>
+            </table>
+            <p style="margin:0 0 24px;font-size:15px;line-height:1.7;color:#475569;">
+              It is now live and visible to all readers. Share it with your audience!
+            </p>
+            %s
+            """.formatted(
+                escapeHtml(author.getName()),
+                escapeHtml(post.getTitle()),
+                ctaButton("View Your Post", postUrl)
+        );
+
+        return htmlHeader() + body + htmlFooter();
+    }
+
     private String ctaButton(String label, String url) {
         return """
                 <table role="presentation" cellpadding="0" cellspacing="0"
@@ -230,8 +296,15 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
+    @Async("taskExecutor")
     public void sendCommentNotification(User postAuthor, Comment comment) {
-
+        try {
+            log.info("[EMAIL] Preparing COMMENT_NOTIFICATION email for post author id={}", postAuthor.getId());
+            doSend(postAuthor.getEmail(), "New comment on your post — Blog CMS",
+                    buildCommentNotificationHtml(postAuthor, comment), EmailType.COMMENT_NOTIFICATION);
+        } catch (Exception e) {
+            log.error("[EMAIL] Failed to prepare COMMENT_NOTIFICATION email for {}: {}", postAuthor.getEmail(), e.getMessage(), e);
+        }
     }
 
     @Override
@@ -247,6 +320,18 @@ public class EmailServiceImpl implements EmailService {
             doSend(email, "Your Blog CMS verification code", buildOtpHtml(email, otp), EmailType.OTP_VERIFICATION);
         } catch (Exception e) {
             log.error("[EMAIL] Failed to prepare OTP email for {}: {}", email, e.getMessage(), e);
+        }
+    }
+
+    @Override
+    @Async("taskExecutor")
+    public void sendPostPublishedEmail(User author, Post post) {
+        try {
+            log.info("[EMAIL] Preparing POST_PUBLISHED email for user id={} postId={}", author.getId(), post.getId());
+            String html = buildPostPublishedHtml(author, post);
+            doSend(author.getEmail(), "Your post is now live — Blog CMS", html, EmailType.POST_PUBLISHED);
+        } catch (Exception e) {
+            log.error("[EMAIL] Failed to send POST_PUBLISHED email for postId={}: {}", post.getId(), e.getMessage(), e);
         }
     }
 }

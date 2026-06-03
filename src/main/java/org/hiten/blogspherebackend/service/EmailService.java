@@ -22,4 +22,7 @@ public interface EmailService {
 
         // Send OTP for email verification during registration
         void sendOtpEmail(String email, String otp);
+
+        // Notify the author that their scheduled post has been auto-published
+        void sendPostPublishedEmail(User author, Post post);
 }
