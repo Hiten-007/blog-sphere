@@ -101,4 +101,13 @@ public interface PostRepository extends SlugRepository, JpaRepository<Post, Long
         @Modifying
         @Query("UPDATE Post p SET p.updatedAt = :updatedAt WHERE p.id = :id")
         void backdateUpdatedAt(@Param("id") Long id, @Param("updatedAt") LocalDateTime updatedAt);
+
+        @Modifying
+        @Query("DELETE FROM Post p WHERE p.isDeleted = true AND p.deletedAt < :cutoff")
+        int hardDeleteByIsDeletedTrueAndDeletedAtBefore(@Param("cutoff") LocalDateTime cutoff);
+
+        // Used by the scheduler to auto-publish posts whose scheduledAt has passed
+        @EntityGraph(attributePaths = {"user", "category", "tags"})
+        @Query("SELECT p FROM Post p WHERE p.status = 'SCHEDULED' AND p.scheduledAt <= :now AND p.isDeleted = false")
+        List<Post> findScheduledPostsDue(@Param("now") LocalDateTime now);
 }

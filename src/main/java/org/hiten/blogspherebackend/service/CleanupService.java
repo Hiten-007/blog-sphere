@@ -8,4 +8,10 @@ public interface CleanupService {
     void purgeDeletedUsers();
 
     void logDatabaseStats();
+
+    void publishScheduledPosts();
+
+    void purgeOrphanImages();
+
+    void sendWeeklyDigestEmails();
 }
