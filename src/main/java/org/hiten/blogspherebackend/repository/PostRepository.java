@@ -116,4 +116,9 @@ public interface PostRepository extends SlugRepository, JpaRepository<Post, Long
         @Query("SELECT p FROM Post p WHERE p.status = 'PUBLISHED' AND p.isDeleted = false " +
                 "AND p.publishedAt >= :since ORDER BY (p.likeCount * 5 + p.viewCount) DESC")
         List<Post> findTopEngagedPostsSince(@Param("since") LocalDateTime since, Pageable pageable);
+
+        // Returns all non-null featuredImageUrl values across ALL posts (including soft-deleted)
+        // Used by the orphan image cleanup job
+        @Query("SELECT p.featuredImageUrl FROM Post p WHERE p.featuredImageUrl IS NOT NULL")
+        List<String> findAllFeaturedImageUrls();
 }
