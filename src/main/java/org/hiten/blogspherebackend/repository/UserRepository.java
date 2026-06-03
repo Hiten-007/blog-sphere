@@ -51,4 +51,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying
     @Query("UPDATE User u SET u.updatedAt = :updatedAt WHERE u.id = :id")
     void backdateUpdatedAt(@Param("id") Long id, @Param("updatedAt") LocalDateTime updatedAt);
+
+    List<User> findByEmailVerifiedTrueAndIsDeletedFalse();
 }

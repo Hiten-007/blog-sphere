@@ -220,6 +220,59 @@ public class EmailServiceImpl implements EmailService {
         return htmlHeader() + body + htmlFooter();
     }
 
+    private String buildWeeklyDigestHtml(User user, List<Post> popularPosts) {
+        StringBuilder postRows = new StringBuilder();
+        for (int i = 0; i < popularPosts.size(); i++) {
+            Post post = popularPosts.get(i);
+            String postUrl = APP_BASE_URL + "/posts/" + post.getSlug();
+            String authorName = post.getUser() != null ? escapeHtml(post.getUser().getName()) : "Unknown";
+            String excerpt = post.getExcerpt() != null ? escapeHtml(post.getExcerpt()) : "";
+            postRows.append("""
+                <tr>
+                  <td style="padding:16px 0;border-bottom:1px solid #e2e8f0;">
+                    <p style="margin:0 0 4px;font-size:13px;color:#94a3b8;">
+                      #%d &nbsp;&#9679;&nbsp; %s &nbsp;&#9679;&nbsp;
+                      &#128065; %d views &nbsp; &#10084; %d likes
+                    </p>
+                    <a href="%s" style="display:block;margin:0 0 6px;font-size:16px;
+                                        font-weight:600;color:#1e293b;text-decoration:none;">
+                      %s
+                    </a>
+                    <p style="margin:0;font-size:14px;color:#475569;line-height:1.6;">%s</p>
+                  </td>
+                </tr>
+                """.formatted(
+                    i + 1,
+                    authorName,
+                    post.getViewCount(),
+                    post.getLikeCount(),
+                    postUrl,
+                    escapeHtml(post.getTitle()),
+                    excerpt
+            ));
+        }
+
+        String body = """
+            <h2 style="margin:0 0 8px;font-size:24px;color:#1e293b;font-weight:700;">
+              Your weekly digest &#128240;
+            </h2>
+            <p style="margin:0 0 24px;font-size:15px;line-height:1.7;color:#475569;">
+              Hi %s! Here are this week's most popular posts on Blog CMS,
+              ranked by engagement.
+            </p>
+            <table role="presentation" cellpadding="0" cellspacing="0" width="100%%">
+              %s
+            </table>
+            %s
+            """.formatted(
+                escapeHtml(user.getName()),
+                postRows,
+                ctaButton("Read More on Blog CMS", APP_BASE_URL)
+        );
+
+        return htmlHeader() + body + htmlFooter();
+    }
+
     private String ctaButton(String label, String url) {
         return """
                 <table role="presentation" cellpadding="0" cellspacing="0"
@@ -261,7 +314,7 @@ public class EmailServiceImpl implements EmailService {
             helper.setSubject(subject);
             helper.setText(htmlBody, true);
             mailSender.send(mimeMessage);
-            log.info("[EMAIL] Sent Successfully: type={} to={}", type, to);;
+            log.info("[EMAIL] Sent Successfully: type={} to={}", type, to);
         }   catch(MessagingException e){
             log.error("[EMAIL] SMTP failure: type={} to={} error={}", type, to, e.getMessage(), e);
         } catch(Exception e){
@@ -308,11 +361,6 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public void sendWeeklyDigest(User user, List<Post> popularPosts) {
-
-    }
-
-    @Override
     @Async("taskExecutor")
     public void sendOtpEmail(String email, String otp) {
         try {
@@ -332,6 +380,17 @@ public class EmailServiceImpl implements EmailService {
             doSend(author.getEmail(), "Your post is now live — Blog CMS", html, EmailType.POST_PUBLISHED);
         } catch (Exception e) {
             log.error("[EMAIL] Failed to send POST_PUBLISHED email for postId={}: {}", post.getId(), e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void sendWeeklyDigest(User user, List<Post> popularPosts) {
+        try {
+            log.info("[EMAIL] Preparing WEEKLY_DIGEST email for user id={}", user.getId());
+            String html = buildWeeklyDigestHtml(user, popularPosts);
+            doSend(user.getEmail(), "Your weekly digest — Blog CMS", html, EmailType.WEEKLY_DIGEST);
+        } catch (Exception e) {
+            log.error("[EMAIL] Failed to send WEEKLY_DIGEST email to {}: {}", user.getEmail(), e.getMessage(), e);
         }
     }
 }

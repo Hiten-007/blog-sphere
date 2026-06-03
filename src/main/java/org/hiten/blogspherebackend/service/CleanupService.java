@@ -9,9 +9,5 @@ public interface CleanupService {
 
     void logDatabaseStats();
 
-    void publishScheduledPosts();
-
     void purgeOrphanImages();
-
-    void sendWeeklyDigestEmails();
 }
