@@ -6,7 +6,6 @@ import org.hiten.blogspherebackend.config.FileStorageConfig;
 import org.hiten.blogspherebackend.repository.PostRepository;
 import org.hiten.blogspherebackend.repository.UserRepository;
 import org.hiten.blogspherebackend.service.CleanupService;
-import org.hiten.blogspherebackend.service.EmailService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
