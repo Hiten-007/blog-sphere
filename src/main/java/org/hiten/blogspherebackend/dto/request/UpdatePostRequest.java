@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hiten.blogspherebackend.enums.PostStatus;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -31,4 +32,6 @@ public class UpdatePostRequest {
     private List<Long> tagIds;
 
     private PostStatus status;
+
+    private LocalDateTime scheduledAt;
 }

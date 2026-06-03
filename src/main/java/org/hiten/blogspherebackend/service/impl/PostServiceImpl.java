@@ -11,6 +11,7 @@ import org.hiten.blogspherebackend.entity.Tag;
 import org.hiten.blogspherebackend.entity.User;
 import org.hiten.blogspherebackend.enums.PostStatus;
 import org.hiten.blogspherebackend.enums.Role;
+import org.hiten.blogspherebackend.exception.BadRequestException;
 import org.hiten.blogspherebackend.exception.ResourceNotFoundException;
 import org.hiten.blogspherebackend.exception.UnauthorizedException;
 import org.hiten.blogspherebackend.mapper.PostMapper;
@@ -90,6 +91,17 @@ public class PostServiceImpl implements PostService {
             post.setPublishedAt(LocalDateTime.now());
         }
 
+        // scheduledAt must be provided and must be in the future
+        if (post.getStatus() == PostStatus.SCHEDULED) {
+            if (request.getScheduledAt() == null) {
+                throw new BadRequestException("scheduledAt is required when status is SCHEDULED");
+            }
+            if (request.getScheduledAt().isBefore(LocalDateTime.now())) {
+                throw new BadRequestException("scheduledAt must be in the future");
+            }
+            post.setScheduledAt(request.getScheduledAt());
+        }
+
         Post savedPost = postRepository.save(post);
 
         return postMapper.toResponse(savedPost);
@@ -149,8 +161,25 @@ public class PostServiceImpl implements PostService {
             post.setStatus(request.getStatus());
 
             // Set publishedAt when publishing for the first time
-            if (oldStatus == PostStatus.DRAFT && request.getStatus() == PostStatus.PUBLISHED) {
+            if (oldStatus != PostStatus.PUBLISHED && request.getStatus() == PostStatus.PUBLISHED) {
                 post.setPublishedAt(LocalDateTime.now());
+                post.setScheduledAt(null);
+            }
+
+            // Handle scheduling
+            if (request.getStatus() == PostStatus.SCHEDULED) {
+                if (request.getScheduledAt() == null) {
+                    throw new BadRequestException("scheduledAt is required when status is SCHEDULED");
+                }
+                if (request.getScheduledAt().isBefore(LocalDateTime.now())) {
+                    throw new BadRequestException("scheduledAt must be in the future");
+                }
+                post.setScheduledAt(request.getScheduledAt());
+            }
+
+            // Unscheduling (moving back to DRAFT)
+            if (request.getStatus() == PostStatus.DRAFT && oldStatus == PostStatus.SCHEDULED) {
+                post.setScheduledAt(null);
             }
         }
 
@@ -174,6 +203,7 @@ public class PostServiceImpl implements PostService {
 
         // Soft delete
         post.setIsDeleted(true);
+        post.setDeletedAt(LocalDateTime.now());
         postRepository.save(post);
     }
 

@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hiten.blogspherebackend.enums.PostStatus;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,4 +40,6 @@ public class CreatePostRequest {
 
     @Builder.Default
     private PostStatus status = PostStatus.DRAFT;
+
+    private LocalDateTime scheduledAt;
 }
