@@ -1,0 +1,3 @@
+ALTER TABLE posts ADD COLUMN scheduled_at TIMESTAMP;
+
+ALTER TABLE posts ADD COLUMN deleted_at TIMESTAMP;

@@ -73,6 +73,10 @@ public class Post {
 
     private LocalDateTime publishedAt;
 
+    private LocalDateTime scheduledAt;
+
+    private LocalDateTime deletedAt;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
