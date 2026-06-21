@@ -1,6 +1,7 @@
 package org.hiten.blogspherebackend.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.hiten.blogspherebackend.dto.request.CreatePostRequest;
 import org.hiten.blogspherebackend.dto.request.UpdatePostRequest;
 import org.hiten.blogspherebackend.dto.response.PostResponse;
@@ -22,9 +23,11 @@ import org.hiten.blogspherebackend.repository.UserRepository;
 import org.hiten.blogspherebackend.service.FileStorageService;
 import org.hiten.blogspherebackend.service.PostService;
 import org.hiten.blogspherebackend.util.SlugUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.*;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -35,6 +38,7 @@ import java.util.stream.Collectors;
 
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class PostServiceImpl implements PostService {
@@ -45,6 +49,10 @@ public class PostServiceImpl implements PostService {
     private final TagRepository tagRepository;
     private final PostMapper postMapper;
     private final FileStorageService fileStorageService;
+    private final StringRedisTemplate redisTemplate;
+
+    @Value("${view.dedup.ttl-seconds:86400}")
+    private long viewDedupTtlSeconds;
 
     @Override
     @Transactional
@@ -318,15 +326,30 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    @Transactional
-    public void incrementViewCount(Long postId) {
-        // Check if post exists
+    @CacheEvict(value = "posts", key = "#postId")
+    public void incrementViewCount(Long postId, String clientIp) {
         if (!postRepository.existsById(postId)) {
             throw new ResourceNotFoundException("Post", "id", postId);
         }
 
-        // Atomic increment - no N+1 problem here!
-        postRepository.incrementViewCount(postId);
+        // Redis key: view::postId::ip
+        // 1 view per IP per post per TTL window (default 24h)
+        // Known edge case: 11:59 PM view and 12:01 AM view both count if TTL hasn't expired;
+        // this is acceptable — same trade-off as sliding window vs fixed window.
+        String dedupKey = "view::" + postId + "::" + clientIp;
+
+        Boolean isFirstView = redisTemplate.opsForValue()
+                .setIfAbsent(dedupKey, "1", java.time.Duration.ofSeconds(viewDedupTtlSeconds));
+
+        if (Boolean.TRUE.equals(isFirstView)) {
+            // incrementViewCount is @Transactional at the repository layer, so it commits
+            // its own short DB transaction without us wrapping this whole service method
+            // in @Transactional — the Redis round trip above never holds a DB connection open
+            postRepository.incrementViewCount(postId);
+            log.debug("[ViewCount] postId={} incremented for ip={}", postId, clientIp);
+        } else {
+            log.debug("[ViewCount] postId={} skipped (already viewed today) for ip={}", postId, clientIp);
+        }
     }
 
     @Override

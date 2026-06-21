@@ -1,5 +1,6 @@
 package org.hiten.blogspherebackend.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -64,16 +65,21 @@ public class PostController {
         return ResponseEntity.ok(posts);
     }
 
-
     @GetMapping("/{id}")
-    public ResponseEntity<PostResponse> getPostById(@PathVariable Long id) {
+    public ResponseEntity<PostResponse> getPostById(@PathVariable Long id, HttpServletRequest request) {
         log.info("Fetching post by ID: {}", id);
 
         PostResponse post = postService.getPostById(id);
 
-        // Increment view count asynchronously (fire and forget)
+        String clientIp = request.getHeader("X-Forwarded-For");
+        if (clientIp != null && !clientIp.isBlank()) {
+            clientIp = clientIp.split(",")[0].trim();
+        } else {
+            clientIp = request.getRemoteAddr();
+        }
+
         try {
-            postService.incrementViewCount(id);
+            postService.incrementViewCount(id, clientIp);
         } catch (Exception e) {
             log.warn("Failed to increment view count for post {}: {}", id, e.getMessage());
         }

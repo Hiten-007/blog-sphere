@@ -43,7 +43,7 @@ public interface PostService {
     List<PostResponse> getPostsByTag(Long tagId);
 
 
-    void incrementViewCount(Long postId);
+    void incrementViewCount(Long postId, String clientIp);
 
 
     PostResponse publishPost(Long postId, Long userId);
