@@ -66,6 +66,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/tags/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/tags/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/tags/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/comments/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/comments/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/comments/**").authenticated()
 
                         // Any future endpoint requires authentication by default
                         .anyRequest().authenticated()
