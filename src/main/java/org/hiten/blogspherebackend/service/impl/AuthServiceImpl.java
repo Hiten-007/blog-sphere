@@ -14,6 +14,7 @@ import org.hiten.blogspherebackend.exception.UnauthorizedException;
 import org.hiten.blogspherebackend.security.JwtUtil;
 import org.hiten.blogspherebackend.service.AuthService;
 import org.hiten.blogspherebackend.service.EmailService;
+import org.hiten.blogspherebackend.service.OtpService;
 import org.hiten.blogspherebackend.service.UserService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,6 +33,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final EmailService emailService;
+    private final OtpService otpService;
 
     @Value("${jwt.access-token-expiration}")
     private long accessTokenExpiration;
@@ -44,13 +46,15 @@ public class AuthServiceImpl implements AuthService {
             throw new BadRequestException("Email already registered");
         }
 
+        boolean emailVerified = otpService.consumeRecentlyVerifiedFlag(request.getEmail());
+
         // Create new user with hashed password
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
                 .role(Role.SUBSCRIBER)
-                .emailVerified(false)
+                .emailVerified(emailVerified)
                 .isDeleted(false)
                 .build();
 

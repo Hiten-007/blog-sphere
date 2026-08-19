@@ -20,7 +20,9 @@ import java.time.LocalDateTime;
 public class OtpServiceImpl implements OtpService {
 
     private static final String OTP_KEY_PREFIX = "otp::";
+    private static final String EMAIL_VERIFIED_KEY_PREFIX = "otp:email-verified::";
     private static final Duration OTP_TTL = Duration.ofMinutes(15);
+    private static final Duration EMAIL_VERIFIED_TTL = Duration.ofMinutes(30);
     private static final int OTP_LENGTH = 6;
 
     private final StringRedisTemplate redisTemplate;
@@ -71,6 +73,7 @@ public class OtpServiceImpl implements OtpService {
 
                 redisTemplate.delete(OTP_KEY_PREFIX + email);
                 markDbOtpUsed(email, otp);
+                markEmailRecentlyVerified(email);
                 log.info("[OTP] Verified via Redis and invalidated for email={}", email);
                 return true;
             }
@@ -102,8 +105,28 @@ public class OtpServiceImpl implements OtpService {
 
         record.setUsed(true);
         otpVerificationRepository.save(record);
+        markEmailRecentlyVerified(email);
         log.info("[OTP] Verified via DB fallback and marked used for email={}", email);
         return true;
+    }
+
+    private void markEmailRecentlyVerified(String email) {
+        try {
+            redisTemplate.opsForValue().set(EMAIL_VERIFIED_KEY_PREFIX + email, "true", EMAIL_VERIFIED_TTL);
+        } catch (Exception e) {
+            log.warn("[OTP] Could not persist email-verified flag for email={}, error={}", email, e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean consumeRecentlyVerifiedFlag(String email) {
+        try {
+            Boolean deleted = redisTemplate.delete(EMAIL_VERIFIED_KEY_PREFIX + email);
+            return Boolean.TRUE.equals(deleted);
+        } catch (Exception e) {
+            log.warn("[OTP] Could not read email-verified flag for email={}, error={}", email, e.getMessage());
+            return false;
+        }
     }
 
     private void markDbOtpUsed(String email, String otp) {
