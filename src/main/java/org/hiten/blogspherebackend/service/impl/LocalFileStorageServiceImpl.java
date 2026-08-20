@@ -8,6 +8,7 @@ import org.hiten.blogspherebackend.exception.BadRequestException;
 import org.hiten.blogspherebackend.exception.FileStorageException;
 import org.hiten.blogspherebackend.exception.ResourceNotFoundException;
 import org.hiten.blogspherebackend.service.FileStorageService;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
-@Service
 @RequiredArgsConstructor
 @Slf4j
 public class LocalFileStorageServiceImpl implements FileStorageService {
@@ -170,6 +170,57 @@ public class LocalFileStorageServiceImpl implements FileStorageService {
             }
         }
         return UUID.randomUUID() + extension;
+    }
+
+    @Override
+    public String storeBytes(
+            byte[] data,
+            String fileName,
+            String contentType,
+            String directory
+    ) {
+        if (data == null || data.length == 0) {
+            throw new BadRequestException("File data must not be empty");
+        }
+
+        String safeDirectory = sanitizeDirectory(directory);
+
+        Path targetDirectory = uploadRootPath
+                .resolve(safeDirectory)
+                .normalize();
+
+        if (!targetDirectory.startsWith(uploadRootPath)) {
+            throw new BadRequestException(
+                    "Invalid storage directory: " + directory
+            );
+        }
+
+        try {
+            Files.createDirectories(targetDirectory);
+
+            Path targetPath = targetDirectory.resolve(fileName).normalize();
+
+            if (!targetPath.startsWith(targetDirectory)) {
+                throw new BadRequestException("Invalid file name");
+            }
+
+            Files.write(targetPath, data);
+
+            log.info(
+                    "Stored byte[] file: {} ({} bytes, contentType={})",
+                    targetPath,
+                    data.length,
+                    contentType
+            );
+
+            return safeDirectory + "/" + fileName;
+
+        } catch (IOException e) {
+            throw new FileStorageException(
+                    "Failed to store file: " + fileName,
+                    e
+            );
+        }
     }
 
     // ----------------------------------------------

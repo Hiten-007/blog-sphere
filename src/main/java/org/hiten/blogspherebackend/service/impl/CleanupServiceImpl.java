@@ -84,53 +84,53 @@ public class CleanupServiceImpl implements CleanupService {
                 duration, softDeletedPosts, softDeletedUsers);
     }
 
-    @Override
-    @Scheduled(cron = "${cleanup.cron.purge-orphan-images:0 0 3 * * SUN}")
-    @Transactional(readOnly = true)
-    public void purgeOrphanImages() {
-        long start = System.currentTimeMillis();
-        log.info("[CleanupJob] purgeOrphanImages starting");
-
-        Set<String> referencedPaths = new HashSet<>(postRepository.findAllFeaturedImageUrls());
-
-        Path uploadRoot = Paths.get(fileStorageConfig.getUploadDir()).toAbsolutePath().normalize();
-
-        if (!Files.exists(uploadRoot)) {
-            log.warn("[CleanupJob] purgeOrphanImages - upload root does not exist: {}", uploadRoot);
-            return;
-        }
-
-        int deletedCount = 0;
-        int errorCount = 0;
-
-        try (Stream<Path> fileStream = Files.walk(uploadRoot)) {
-            List<Path> allFiles = fileStream
-                    .filter(Files::isRegularFile)
-                    .toList();
-
-            log.info("[CleanupJob] purgeOrphanImages - scanning {} file(s) on disk", allFiles.size());
-
-            for (Path filePath : allFiles) {
-                String relativePath = uploadRoot.relativize(filePath).toString().replace("\\", "/");
-
-                if (!referencedPaths.contains(relativePath)) {
-                    try {
-                        Files.delete(filePath);
-                        deletedCount++;
-                        log.debug("[CleanupJob] purgeOrphanImages - deleted orphan: {}", relativePath);
-                    } catch (IOException e) {
-                        errorCount++;
-                        log.error("[CleanupJob] purgeOrphanImages - failed to delete {}: {}",
-                                relativePath, e.getMessage());
-                    }
-                }
-            }
-        } catch (IOException e) {
-            log.error("[CleanupJob] purgeOrphanImages - error walking upload directory: {}", e.getMessage(), e);
-        }
-
-        long duration = System.currentTimeMillis() - start;
-        log.info("[CleanupJob] purgeOrphanImages complete in {}ms - deleted={} errors={}",
-                duration, deletedCount, errorCount);
-    }
+//    @Override
+//    @Scheduled(cron = "${cleanup.cron.purge-orphan-images:0 0 3 * * SUN}")
+//    @Transactional(readOnly = true)
+//    public void purgeOrphanImages() {
+//        long start = System.currentTimeMillis();
+//        log.info("[CleanupJob] purgeOrphanImages starting");
+//
+//        Set<String> referencedPaths = new HashSet<>(postRepository.findAllFeaturedImageUrls());
+//
+//        Path uploadRoot = Paths.get(fileStorageConfig.getUploadDir()).toAbsolutePath().normalize();
+//
+//        if (!Files.exists(uploadRoot)) {
+//            log.warn("[CleanupJob] purgeOrphanImages - upload root does not exist: {}", uploadRoot);
+//            return;
+//        }
+//
+//        int deletedCount = 0;
+//        int errorCount = 0;
+//
+//        try (Stream<Path> fileStream = Files.walk(uploadRoot)) {
+//            List<Path> allFiles = fileStream
+//                    .filter(Files::isRegularFile)
+//                    .toList();
+//
+//            log.info("[CleanupJob] purgeOrphanImages - scanning {} file(s) on disk", allFiles.size());
+//
+//            for (Path filePath : allFiles) {
+//                String relativePath = uploadRoot.relativize(filePath).toString().replace("\\", "/");
+//
+//                if (!referencedPaths.contains(relativePath)) {
+//                    try {
+//                        Files.delete(filePath);
+//                        deletedCount++;
+//                        log.debug("[CleanupJob] purgeOrphanImages - deleted orphan: {}", relativePath);
+//                    } catch (IOException e) {
+//                        errorCount++;
+//                        log.error("[CleanupJob] purgeOrphanImages - failed to delete {}: {}",
+//                                relativePath, e.getMessage());
+//                    }
+//                }
+//            }
+//        } catch (IOException e) {
+//            log.error("[CleanupJob] purgeOrphanImages - error walking upload directory: {}", e.getMessage(), e);
+//        }
+//
+//        long duration = System.currentTimeMillis() - start;
+//        log.info("[CleanupJob] purgeOrphanImages complete in {}ms - deleted={} errors={}",
+//                duration, deletedCount, errorCount);
+//    }
 }

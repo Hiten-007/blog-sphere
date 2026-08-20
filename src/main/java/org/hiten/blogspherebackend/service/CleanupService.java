@@ -9,5 +9,5 @@ public interface CleanupService {
 
     void logDatabaseStats();
 
-    void purgeOrphanImages();
+//    void purgeOrphanImages();
 }

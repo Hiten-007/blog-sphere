@@ -11,6 +11,7 @@ import org.hiten.blogspherebackend.entity.Category;
 import org.hiten.blogspherebackend.exception.FileStorageException;
 import org.hiten.blogspherebackend.exception.ResourceNotFoundException;
 import org.hiten.blogspherebackend.repository.CategoryRepository;
+import org.hiten.blogspherebackend.service.FileStorageService;
 import org.hiten.blogspherebackend.service.ImageGenerationService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -41,7 +42,7 @@ public class ImageGenerationServiceImpl implements ImageGenerationService {
 
     private final ImagePromptAgent imagePromptAgent;
     private final CategoryRepository categoryRepository;
-    private final FileStorageConfig fileStorageConfig;
+    private final FileStorageService fileStorageService;
 
     @Value("${GEMINI_API_KEY:}")
     private String geminiApiKey;
@@ -50,7 +51,6 @@ public class ImageGenerationServiceImpl implements ImageGenerationService {
     private boolean imageEnabled;
 
     private RestClient restClient;
-    private Path aiImagesDir;
 
     @PostConstruct
     public void init() {
@@ -64,16 +64,6 @@ public class ImageGenerationServiceImpl implements ImageGenerationService {
                 .requestFactory(requestFactory)
                 .build();
 
-        aiImagesDir = Paths.get(fileStorageConfig.getUploadDir())
-                .toAbsolutePath()
-                .normalize()
-                .resolve("ai-images");
-        try {
-            Files.createDirectories(aiImagesDir);
-            log.info("AI images directory initialised at: {}", aiImagesDir);
-        } catch (IOException e) {
-            throw new FileStorageException("Cannot create ai-images directory", e);
-        }
     }
 
     @Override
@@ -158,17 +148,18 @@ public class ImageGenerationServiceImpl implements ImageGenerationService {
     }
 
     private String saveImageBytes(byte[] imageBytes) {
-        String fileName = "ai-generated-" + UUID.randomUUID() + ".png";
-        Path targetPath = aiImagesDir.resolve(fileName);
 
-        try {
-            Files.write(targetPath, imageBytes);
-            log.info("Saved AI-generated image: {} ({} bytes)", targetPath, imageBytes.length);
-        } catch (IOException e) {
-            throw new FileStorageException("Failed to save generated image: " + fileName, e);
-        }
+        String fileName =
+                "ai-generated-" +
+                        UUID.randomUUID() +
+                        ".png";
 
-        return "/uploads/ai-images/" + fileName;
+        return fileStorageService.storeBytes(
+                imageBytes,
+                fileName,
+                "image/png",
+                "ai-images"
+        );
     }
 }
 
