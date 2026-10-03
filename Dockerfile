@@ -1,21 +1,16 @@
-# --- Build stage ---
-FROM eclipse-temurin:21-jdk AS build
+# ---- build ----
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
-
-COPY mvnw .
-COPY .mvn .mvn
 COPY pom.xml .
-RUN chmod +x mvnw && ./mvnw -q -o dependency:go-offline || ./mvnw -q dependency:go-offline
+RUN mvn -B -q dependency:go-offline
+COPY src ./src
+RUN mvn -B -q package -DskipTests
 
-COPY src src
-RUN ./mvnw -q -DskipTests package && \
-    mv target/*.jar app.jar
-
-# --- Run stage ---
-FROM eclipse-temurin:21-jre AS run
+# ---- run ----
+FROM eclipse-temurin:21-jre
 WORKDIR /app
-
-COPY --from=build /app/app.jar app.jar
-
+RUN useradd -r -u 1001 app && mkdir -p /app/uploads && chown app /app/uploads
+COPY --from=build /app/target/*.jar app.jar
+USER app
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java","-XX:MaxRAMPercentage=75","-jar","app.jar"]
