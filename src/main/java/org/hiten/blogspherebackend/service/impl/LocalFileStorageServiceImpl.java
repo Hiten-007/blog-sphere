@@ -8,9 +8,9 @@ import org.hiten.blogspherebackend.exception.BadRequestException;
 import org.hiten.blogspherebackend.exception.FileStorageException;
 import org.hiten.blogspherebackend.exception.ResourceNotFoundException;
 import org.hiten.blogspherebackend.service.FileStorageService;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,6 +23,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
+@Service
+@ConditionalOnProperty(name = "file.storage-type", havingValue = "local", matchIfMissing = true)
 @RequiredArgsConstructor
 @Slf4j
 public class LocalFileStorageServiceImpl implements FileStorageService {

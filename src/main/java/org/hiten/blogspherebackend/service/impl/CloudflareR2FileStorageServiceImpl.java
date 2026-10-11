@@ -9,6 +9,7 @@ import org.hiten.blogspherebackend.exception.BadRequestException;
 import org.hiten.blogspherebackend.exception.FileStorageException;
 import org.hiten.blogspherebackend.exception.ResourceNotFoundException;
 import org.hiten.blogspherebackend.service.FileStorageService;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ import java.net.URI;
 import java.util.UUID;
 
 @Service
+@ConditionalOnProperty(name = "file.storage-type", havingValue = "r2")
 @Slf4j
 @RequiredArgsConstructor
 public class CloudflareR2FileStorageServiceImpl
