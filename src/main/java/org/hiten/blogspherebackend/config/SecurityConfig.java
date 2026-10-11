@@ -49,7 +49,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-ui.html"
+                                "/swagger-ui.html",
+                                "/actuator/health/**"
                         ).permitAll()
                         // Auth - register, login, refresh are always public
                         .requestMatchers("/api/v1/auth/**").permitAll()
